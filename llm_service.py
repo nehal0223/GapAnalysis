@@ -41,6 +41,37 @@ def _get_client_and_model():
     )
 
 
+def llm_config_summary() -> dict:
+    azure_endpoint = _get_env("AZURE_OPENAI_ENDPOINT")
+    azure_key_present = bool(_get_env("AZURE_OPENAI_API_KEY", "AZURE_OPENAI_KEY"))
+    azure_deployment = _get_env(
+        "AZURE_OPENAI_DEPLOYMENT",
+        "AZURE_OPENAI_DEPLOYMENT_NAME",
+        "AZURE_OPENAI_MODEL",
+    )
+    azure_api_version = _get_env("AZURE_OPENAI_API_VERSION") or "2024-02-15-preview"
+
+    openai_key_present = bool(_get_env("OPENAI_API_KEY"))
+    openai_model = _get_env("OPENAI_MODEL") or "gpt-4o-mini"
+
+    mode = "azure_openai" if (azure_endpoint and azure_key_present and azure_deployment) else "openai" if openai_key_present else "none"
+
+    return {
+        "mode": mode,
+        "azure": {
+            "endpoint_present": bool(azure_endpoint),
+            "endpoint": azure_endpoint,
+            "api_key_present": azure_key_present,
+            "deployment": azure_deployment,
+            "api_version": azure_api_version,
+        },
+        "openai": {
+            "api_key_present": openai_key_present,
+            "model": openai_model,
+        },
+    }
+
+
 def chat_completion(prompt: str, temperature: float = 0.2) -> str:
     client, model = _get_client_and_model()
     response = client.chat.completions.create(
